@@ -24,6 +24,7 @@ require_once ('sqlconnect.php');
 if(isset($_POST['submit'])) {
 	$filename = addslashes($_FILES["fileToUpload"]["tmp_name"]);
 
+echo '<script src="makegraph.js"></script>';
 echo "<script type='text/javascript'>\n";
 # to build a multi-line string for d3 to parse, first build an
 # array and then join it up.  Sigh. BB
@@ -41,8 +42,8 @@ foreach ($lines as $line_num => $line) {
     }
 }
 echo "].join('\\n');\n";
+echo "graphparseddata(parserawdata(rawpm25data));\n";
 echo "</script>\n";
-echo '<script src="makegraph.js"></script>';
 
 
 	$pos = stripos(basename($_FILES["fileToUpload"]["name"]), "_");
@@ -54,7 +55,7 @@ echo '<script src="makegraph.js"></script>';
 		#echo "The select query is: ".$sel."<br />";
         $result = mysqli_query($db, $sel);
 		$row = $result->fetch_array();
-		$monID = $row['monitorID'];
+		$monID = $row['monitorID']; # gets most recent placement
             # monitor software version 15 adds the navg field 7/2/18 BB
 	    $sql = "LOAD DATA LOCAL INFILE  '".$filename."'
 			INTO TABLE monitor_pm25

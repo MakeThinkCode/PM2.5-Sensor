@@ -14,7 +14,7 @@
     <script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js" integrity="sha512-/Nsx9X4HebavoBvEBuyp3I7od5tA0UzAxs+j83KgC8PU0kgB4XiK4Lfe4y4cgBtaRJQEIFCW+oC506aPT2L1zw==" crossorigin=""></script>
     <!-- the links and script tags above include icons and functions required by Leaflet. At this stage, you shouldn't have to mess with them. -->
 
-<script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.1.0.min.js"></script><script src="https://d3js.org/d3.v4.min.js"></script>
 	
 </head>
 <body >
@@ -65,27 +65,60 @@ function fillbasemap() {
 }
 
 
-
 function popupcaption(item) {
-    return item.name
+    return item.monitorName
            // + " (id is " + item.id + ")"
            + "<br>"
            + item.lodate + " - " + item.hidate
            + "<br>"
            + "pm 2.5: low " + item.pm25lo + ", "
            + " high " + item.pm25hi + ", "
-           + " average " + item.pm25av
+           + " average " + item.pm25av + " <br>"
+           //+ "<button onclick='showgraph(" + item.monitorID + ")'>graph</button>"
+           + '<svg id="' + item.monitorName+'" width="400" height="300"></svg>' 
            ;
 }
 
 
+function generategraph(response) {
+    var obj = JSON.parse(response);
+
+    console.log("still need to pass that info to a graphing routine");
+}
+
+
+function showgraph(itemid) {
+    console.log("itemid = " + itemid);
+    var xmlhttp = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            generategraph( this.responseText);
+        }
+    };
+    xmlhttp.open("POST", "getmonitordata.php", true);
+    xmlhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+    xmlhttp.send( "monitorId=" + itemid);
+}
+
 
 function makemarker(item) {
-    L.circle([item.lat, item.lon], 500, {
+    L.circle([item.monLat, item.monLong], 500, {
 		color: 'purple',
 		fillColor: 'purple',
 		fillOpacity: 0.5
-	}).bindPopup(popupcaption(item)).addTo(mylayer1);
+	}).bindPopup(popupcaption(item))
+        .addTo(mylayer1)
+        .on("click", function() { 
+            console.log("clicking " + item.monitorName);
+            var s = d3.select("#"+item.monitorName);
+            console.log(s);
+            s.append("circle")
+            .style("stroke", "#ccc")
+            .style("fill", "#eee")
+            .attr("r", 90)
+            .attr("cx", 100)
+            .attr("cy", 100)
+        });
     
 }
 
@@ -96,23 +129,22 @@ function makepopups(response) {
     //console.log("reparsed response=");
     //console.log(JSON.stringify(obj));
     obj.map(makemarker);
-
 }
 
 function fillmarkerinfo() {
-        var xmlhttp = new XMLHttpRequest();
-        xmlhttp.onreadystatechange = function() {
-            if (this.readyState == 4 && this.status == 200) {
-                makepopups( this.responseText);
-            }
-        };
-	xmlhttp.open("POST", "displayquery2.php", true);
-	xmlhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-        xmlhttp.send("cow=mooing&crow=cawing"); // actually don't need any post data yet.
+    var xmlhttp = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            makepopups( this.responseText);
+        }
+    };
+    xmlhttp.open("POST", "getmonitorlocs.php", true);
+    xmlhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+    xmlhttp.send("postdata=notrequired&moredata=notrequired");
 }
 
 
-// from !/Desktop/SpatialReasoning/projects/AGU_OpenAPI/agu_explorer/authors.html
+// from ~/Desktop/SpatialReasoning/projects/AGU_OpenAPI/agu_explorer/authors.html
 function fillmarkerinfo_obsref() {
     $.post("displayquery.php", {
         data: {cow: "mooing", crow: "cawing"},

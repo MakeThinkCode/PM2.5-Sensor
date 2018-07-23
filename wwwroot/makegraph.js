@@ -19,17 +19,25 @@ var line = d3.line()
     .x(function(d) { return x(d.date); })
     .y(function(d) { return y(d.pm25); });
 
-//d3.tsv("data.tsv", function(d) {
-var parsed = d3.csvParse(rawpm25data, function(d) {
-  d.date = parseTime(d.datetime);
-  d.pm25 = +d.pm25;
-console.log(" " + d.date + " " + d.pm25);
-  return d;
-});
 
-function doparse(data) {
-//  if (error) throw error;
 
+// parse a CSV string (a long string of newline-separated 
+// lines of comma-separated values, with a header as D3
+// expects) into an array of objects {date:.., pm25:...}
+function parserawdata(csvstring) {
+  var parsed = d3.csvParse(csvstring, function(d) {
+    d.date = parseTime(d.datetime);
+    d.pm25 = +d.pm25;
+    console.log(" " + d.date + " " + d.pm25);
+    return d;
+    });
+  return parsed;
+}
+
+// given an array of objects {date:, pm25:}, make a graph in the
+// single svg element on the page.  Sorry yes, I know it's assuming
+// an awful lot of infrastructure so far, e.g. the graph labels
+function graphparseddata(data) {
   x.domain(d3.extent(data, function(d) { return d.date; }));
   y.domain(d3.extent(data, function(d) { return d.pm25; }));
 
@@ -58,5 +66,3 @@ function doparse(data) {
       .attr("stroke-width", 1.5)
       .attr("d", line);
 }
-
-doparse(parsed);
