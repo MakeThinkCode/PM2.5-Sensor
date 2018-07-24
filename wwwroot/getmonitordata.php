@@ -8,7 +8,7 @@ if(isset($_POST['monitorId'])) {
 
     $db=mysqli_connect($host, $user, $pwd, $conn);
     if($db) {		
-        $sel = "SELECT * FROM `monitor_pm25` where monitorID=" . $monid;
+        $sel = "SELECT * FROM `monitor_pm25` where navg > 5 AND monitorID=" . $monid;
         #echo $sel;
         $result = mysqli_query($db, $sel);
         echo "[";

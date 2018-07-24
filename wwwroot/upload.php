@@ -18,7 +18,7 @@ Particulates File Upload
   <br />
   <input type="submit" value="Upload PM2.5 Data" name="submit" id="submit">
 </form> 
-<svg width="960" height="500"></svg>
+<svg id="uploadgraph" width="960" height="500"></svg>
 <?php
 require_once ('sqlconnect.php');
 if(isset($_POST['submit'])) {
@@ -42,7 +42,7 @@ foreach ($lines as $line_num => $line) {
     }
 }
 echo "].join('\\n');\n";
-echo "graphparseddata(parserawdata(rawpm25data));\n";
+echo "graphparseddata(parserawdata(rawpm25data), '#uploadgraph');\n";
 echo "</script>\n";
 
 

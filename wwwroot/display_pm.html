@@ -15,6 +15,7 @@
     <!-- the links and script tags above include icons and functions required by Leaflet. At this stage, you shouldn't have to mess with them. -->
 
 <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script><script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="makegraph.js"></script>
 	
 </head>
 <body >
@@ -64,40 +65,62 @@ function fillbasemap() {
 
 }
 
+function graphid(item) {
+    return "graph_" + item.monitorName + "_" + item.monitorID;
+}
+
+function captionid(item) {
+    return "caption_" + item.monitorName + "_" + item.monitorID;
+}
+
 
 function popupcaption(item) {
-    return item.monitorName
-           // + " (id is " + item.id + ")"
+    return '<div id="' + captionid(item) + '"></div>'
            + "<br>"
-           + item.lodate + " - " + item.hidate
-           + "<br>"
-           + "pm 2.5: low " + item.pm25lo + ", "
-           + " high " + item.pm25hi + ", "
-           + " average " + item.pm25av + " <br>"
-           //+ "<button onclick='showgraph(" + item.monitorID + ")'>graph</button>"
-           + '<svg id="' + item.monitorName+'" width="400" height="300"></svg>' 
+           + '<svg id="' + graphid(item) + '" width="300" height="300"></svg>' 
+              // why doesn't width of 400 fit in the popup?
            ;
 }
 
-
-function generategraph(response) {
-    var obj = JSON.parse(response);
-
-    console.log("still need to pass that info to a graphing routine");
+function makecaptions(data, item, divid) {
+    var div = d3.select(divid);
+    var lodate = d3.min(data, function(d){return d.date;});
+    var hidate = d3.max(data, function(d){return d.date;});
+    var lopm  = d3.min(data, function(d){return d.pm25;});
+    var hipm  = d3.max(data, function(d){return d.pm25;});
+    var avgpm = d3.mean(data, function(d){return d.pm25;});
+    var name = item.monitorName;
+    div.html(""
+             + "monitor " + name + "<br>"
+             + lodate + " - " + hidate + "<br>"
+             + "PM2.5 average " + d3.format(".2f")(avgpm)
+             + " ug/m3 (uncalibrated), ranging from "
+             + d3.format(".2f")(lopm) + " to "
+             + d3.format(".2f")(hipm)
+            );
 }
 
 
-function showgraph(itemid) {
-    console.log("itemid = " + itemid);
+function generategraph(response, item) {
+    var obj = JSON.parse(response);
+    var parsedobj = obj.map(function(d) {
+        return {date: parseTime(d.obsDatetime),
+                pm25:     +d.pm25Std}; });
+    graphparseddata(parsedobj, '#' + graphid(item));
+    makecaptions(parsedobj, item, '#' + captionid(item));
+}
+
+
+function showgraph(item) {
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
-            generategraph( this.responseText);
+            generategraph( this.responseText, item);
         }
     };
     xmlhttp.open("POST", "getmonitordata.php", true);
     xmlhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-    xmlhttp.send( "monitorId=" + itemid);
+    xmlhttp.send( "monitorId=" + item.monitorID);
 }
 
 
@@ -109,25 +132,13 @@ function makemarker(item) {
 	}).bindPopup(popupcaption(item))
         .addTo(mylayer1)
         .on("click", function() { 
-            console.log("clicking " + item.monitorName);
-            var s = d3.select("#"+item.monitorName);
-            console.log(s);
-            s.append("circle")
-            .style("stroke", "#ccc")
-            .style("fill", "#eee")
-            .attr("r", 90)
-            .attr("cx", 100)
-            .attr("cy", 100)
+            showgraph(item);
         });
     
 }
 
 function makepopups(response) {
-    //console.log("response=");
-    //console.log(response);
     var obj = JSON.parse(response);
-    //console.log("reparsed response=");
-    //console.log(JSON.stringify(obj));
     obj.map(makemarker);
 }
 
@@ -142,41 +153,6 @@ function fillmarkerinfo() {
     xmlhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
     xmlhttp.send("postdata=notrequired&moredata=notrequired");
 }
-
-
-// from ~/Desktop/SpatialReasoning/projects/AGU_OpenAPI/agu_explorer/authors.html
-function fillmarkerinfo_obsref() {
-    $.post("displayquery.php", {
-        data: {cow: "mooing", crow: "cawing"},
-        function(data, status) { console.log("status="); console.log(JSON.stringify(status)); makepopups(data); }
-    });
-/*
-    $.ajax("displayquery.php", {
-        type: "POST",
-        data: JSON.stringify({
-            statements: [{
-                statement: "something",
-                parameters: {}
-                }],
-            pockets: "none"
-            }),
-        contentType: "application/json",
-        error: function(err) {
-                console.log("error:");
-                console.log(err);
-            },
-        beforeSend: function (xhr) {
-            },
-        success: function(res) {
-                makepopups(res);
-            }
-        });*/
-
-
-
-}
-
-
 
 
 </script>

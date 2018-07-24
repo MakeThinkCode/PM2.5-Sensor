@@ -1,25 +1,9 @@
 
 /* from https://bl.ocks.org/mbostock/3883245 */
 
-var svg = d3.select("svg"),
-    margin = {top: 20, right: 20, bottom: 30, left: 50},
-    width = +svg.attr("width") - margin.left - margin.right,
-    height = +svg.attr("height") - margin.top - margin.bottom,
-    g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
 
 var parseTime = d3.timeParse("%Y-%m-%e %H:%M:%S");  //"2018-7-2 14:44:59"
-
-var x = d3.scaleTime()
-    .rangeRound([0, width]);
-
-var y = d3.scaleLinear()
-    .rangeRound([height, 0]);
-
-var line = d3.line()
-    .x(function(d) { return x(d.date); })
-    .y(function(d) { return y(d.pm25); });
-
-
 
 // parse a CSV string (a long string of newline-separated 
 // lines of comma-separated values, with a header as D3
@@ -37,7 +21,23 @@ function parserawdata(csvstring) {
 // given an array of objects {date:, pm25:}, make a graph in the
 // single svg element on the page.  Sorry yes, I know it's assuming
 // an awful lot of infrastructure so far, e.g. the graph labels
-function graphparseddata(data) {
+function graphparseddata(data, svgid) {
+  var svg = d3.select(svgid),
+        margin = {top: 20, right: 20, bottom: 30, left: 50},
+        width = +svg.attr("width") - margin.left - margin.right,
+        height = +svg.attr("height") - margin.top - margin.bottom,
+        g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  var x = d3.scaleTime()
+        .rangeRound([0, width]);
+
+  var y = d3.scaleLinear()
+        .rangeRound([height, 0]);
+
+  var line = d3.line()
+        .x(function(d) { return x(d.date); })
+        .y(function(d) { return y(d.pm25); });
+
   x.domain(d3.extent(data, function(d) { return d.date; }));
   y.domain(d3.extent(data, function(d) { return d.pm25; }));
 
